@@ -1,0 +1,11 @@
+{
+  "files.associations": {
+    "*.ino": "cpp",
+    "__locale": "cpp",
+    "__string": "cpp",
+    "string_view": "cpp",
+    "string": "cpp",
+    "__tuple": "cpp",
+    "array": "cpp"
+  }
+}
