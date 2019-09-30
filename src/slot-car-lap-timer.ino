@@ -8,9 +8,15 @@
 // Module connection pins (Digital Pins)
 #define CLK D2
 #define DIO D3
-#define DEBUG 1
+
+const int buttonPinCarOne = D6;
+int lapsCarOne = 0;
+volatile bool carOneIsPressed = false;
+
 
 TM1637 tm1637(CLK,DIO);
+
+SYSTEM_MODE(MANUAL);
 
 void setup()
 {
@@ -18,32 +24,42 @@ void setup()
   tm1637.set(0);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
   tm1637.point(POINT_OFF);
 
-  if (DEBUG) {
-    Serial.begin(9600);
-    Serial.println("Serial ready...");
-  }
+  pinMode(buttonPinCarOne, INPUT_PULLUP);
+  attachInterrupt(buttonPinCarOne, press, FALLING);
+
+  Serial.begin(9600);
+  Serial.println("Serial ready...");
 }
 
 void loop()
 {
-  ledDisplayTimer();
+    if (carOneIsPressed == true)
+    {
+      Serial.println("Key Pressed");
+      lapsCarOne++;
+      carOneIsPressed = false;
+    }
+  ledDisplayTimer(lapsCarOne);
 }
 
-void ledDisplayTimer() {
-  int count = 0;
+void press()
+{
+    //Serial.println("switched now");
+  static unsigned long last_interrupt_time = 0;
+  unsigned long interrupt_time = millis();
+  if (interrupt_time - last_interrupt_time > 300)  // debounce time = 50milliseconds
+  {
+    carOneIsPressed = true;
+  }
+  last_interrupt_time = interrupt_time;
+}
 
-  while(true) {
-    if (count == 9999) count = 0;
+void ledDisplayTimer(int laps) {
+    if (laps == 9999) laps = 0;
 
-    String total = String(count);
+    String total = String(laps);
     char CharStore[4];
     total.toCharArray(CharStore, 4);
-
-    // for(unsigned char BitSelect = 0;BitSelect < 4;BitSelect ++) {
-    //   ListDisp[BitSelect] = NumTab[i];
-    //   i ++;
-    //   if(i == sizeof(NumTab)) i = 0;
-    // }
 
     int DisplayChar0 = CharStore[0] - '0';
     int DisplayChar1 = CharStore[1] - '0';
@@ -77,29 +93,8 @@ void ledDisplayTimer() {
       DisplayChar0 = 0;
     }
 
-    if (totalLength == 4) {
-    }
-
-    if (DEBUG) {
-      Serial.print(total);
-      Serial.print(" --- ");
-      Serial.print(DisplayChar0);
-      Serial.print(" | ");
-      Serial.print(DisplayChar1);
-      Serial.print(" | ");
-      Serial.print(DisplayChar2);
-      Serial.print(" | ");
-      Serial.print(DisplayChar3);
-      Serial.println(" == ");
-    }
-
-
     tm1637.display(0,DisplayChar0);
     tm1637.display(1,DisplayChar1);
     tm1637.display(2,DisplayChar2);
     tm1637.display(3,DisplayChar3);
-
-    count++;
-    delay(10);
-  }
 }
