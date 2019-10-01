@@ -48,32 +48,31 @@ void loop()
   ledDisplayTimer(lapsCarOne);
 }
 
-void millis_to_laptime(unsigned long millis) {
+void millis_to_laptime(unsigned long millis, char* time_buffer) {
   long in_seconds = millis / 1000;
-  int runHours= in_seconds / 3600;
-  int secsRemaining=in_seconds % 3600;
-  int runMinutes=secsRemaining / 60;
-  int runSeconds=secsRemaining % 60;
+  // int runHours = in_seconds / 3600;
+  int secsRemaining = in_seconds % 3600;
+  int runMinutes = secsRemaining / 60;
+  int runSeconds = secsRemaining % 60;
+  int millisRemaining = millis % 1000;
 
-  char time_buffer[21];
-  // String time_string;
-  sprintf(time_buffer,"%02d:%02d:%02d",runHours,runMinutes,runSeconds);
-  Serial.println(time_buffer);
-  // return time_string;
+  sprintf(time_buffer,"%02d:%02d:%02d", runMinutes, runSeconds, millisRemaining);
 }
 
-void press() {
+void press() { // make re-usable when using for car 2 as well
+  const int debounce = 300;
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
-  if (interrupt_time - last_interrupt_time > 300) {
+  if (interrupt_time - last_interrupt_time > debounce) {
     // LAP
     unsigned long current_time_car_one = millis();
     unsigned long lap_time_car_one = current_time_car_one - last_lap_moment_car_one;
     last_lap_moment_car_one = current_time_car_one;
     carOneIsPressed = true;
     Serial.print("Car 1 LAP: ");
-    // Serial.print(millis_to_laptime(lap_time_car_one));
-    millis_to_laptime(lap_time_car_one);
+    char time_buffer[21];
+    millis_to_laptime(lap_time_car_one, time_buffer);
+    Serial.print(time_buffer);
     Serial.println(" ");
   }
   last_interrupt_time = interrupt_time;
