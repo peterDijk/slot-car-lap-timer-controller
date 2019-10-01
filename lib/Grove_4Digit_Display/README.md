@@ -10,9 +10,7 @@ Grove_4Digital_Display
 ***Library Requirement***
 
 Install libraries on Arduino Library Mnager.
-
 	TimerOne - maintained by Paul Stoffregen
-
 
 For connection guide and more information, please refer to [wiki page](http://wiki.seeedstudio.com/Grove-4-Digit_Display/).
 
