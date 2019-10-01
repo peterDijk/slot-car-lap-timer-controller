@@ -38,22 +38,17 @@ void setup()
 
 void loop()
 {
-    if (carOneIsPressed == true)
-    {
-      Serial.println("Key Pressed");
+    if (carOneIsPressed) {
       lapsCarOne++;
       carOneIsPressed = false;
     }
   ledDisplayTimer(lapsCarOne);
 }
 
-void press()
-{
-    //Serial.println("switched now");
+void press() {
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
-  if (interrupt_time - last_interrupt_time > 300)  // debounce time = 50milliseconds
-  {
+  if (interrupt_time - last_interrupt_time > 300) {
     carOneIsPressed = true;
   }
   last_interrupt_time = interrupt_time;
@@ -79,22 +74,21 @@ void ledDisplayTimer(int laps) {
     int totalLength = total.length();
     if (totalLength == 1) {
       DisplayChar3 = DisplayChar0;
-      // DisplayChar0 = 0;
-      // DisplayChar1 = 0;
-      // DisplayChar2 = 0;
+
       ledDisp_1.display(3,DisplayChar3);
     } else if (totalLength == 2) {
+
       DisplayChar3 = DisplayChar1;
       DisplayChar2 = DisplayChar0;
-      // DisplayChar1 = 0;
-      // DisplayChar0 = 0;
+
       ledDisp_1.display(2,DisplayChar2);
       ledDisp_1.display(3,DisplayChar3);
+
     } else if (totalLength == 3) {
       DisplayChar3 = DisplayChar2;
       DisplayChar2 = DisplayChar1;
       DisplayChar1 = DisplayChar0;
-      // DisplayChar0 = 0;
+
       ledDisp_1.display(1,DisplayChar1);
       ledDisp_1.display(2,DisplayChar2);
       ledDisp_1.display(3,DisplayChar3);
