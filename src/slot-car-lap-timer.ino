@@ -15,6 +15,7 @@ TM1637 ledDisp_1(CLK_1,DIO_1);
 volatile bool carOneIsPressed = false;
 int lapsCarOne = 0;
 
+
 /* 
  * no connect to particle cloud for local development.
  * set to semi-auto to let setup + loop run, while connecting to cloud
@@ -36,6 +37,8 @@ void setup()
   Serial.println("Serial ready...");
 }
 
+unsigned long last_lap_moment_car_one = millis(); // this has to move to moment the signals for go are done peep peep peeeeeeep go
+
 void loop()
 {
     if (carOneIsPressed) {
@@ -45,11 +48,32 @@ void loop()
   ledDisplayTimer(lapsCarOne);
 }
 
-void press() {
+void millis_to_laptime(unsigned long millis, char* time_buffer) {
+  long in_seconds = millis / 1000;
+  // int runHours = in_seconds / 3600;
+  int secsRemaining = in_seconds % 3600;
+  int runMinutes = secsRemaining / 60;
+  int runSeconds = secsRemaining % 60;
+  int millisRemaining = millis % 1000;
+
+  sprintf(time_buffer,"%02d:%02d:%02d", runMinutes, runSeconds, millisRemaining);
+}
+
+void press() { // make re-usable when using for car 2 as well
+  const int debounce = 300;
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
-  if (interrupt_time - last_interrupt_time > 300) {
+  if (interrupt_time - last_interrupt_time > debounce) {
+    // LAP
+    unsigned long current_time_car_one = millis();
+    unsigned long lap_time_car_one = current_time_car_one - last_lap_moment_car_one;
+    last_lap_moment_car_one = current_time_car_one;
     carOneIsPressed = true;
+    Serial.print("Car 1 LAP: ");
+    char time_buffer[21];
+    millis_to_laptime(lap_time_car_one, time_buffer);
+    Serial.print(time_buffer);
+    Serial.println(" ");
   }
   last_interrupt_time = interrupt_time;
 }
