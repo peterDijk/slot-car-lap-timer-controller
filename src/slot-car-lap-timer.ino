@@ -5,24 +5,29 @@
  * Date: 29 September 2019
  */
 #include "Grove_4Digit_Display.h"
-// Module connection pins (Digital Pins)
-#define CLK D2
-#define DIO D3
 
-const int buttonPinCarOne = D6;
-int lapsCarOne = 0;
+#define CLK_1 D2
+#define DIO_1 D3
+#define buttonPinCarOne D6
+
+// Car 1
+TM1637 ledDisp_1(CLK_1,DIO_1);
 volatile bool carOneIsPressed = false;
+int lapsCarOne = 0;
 
-
-TM1637 tm1637(CLK,DIO);
-
+/* 
+ * no connect to particle cloud for local development.
+ * set to semi-auto to let setup + loop run, while connecting to cloud
+ */
 SYSTEM_MODE(MANUAL);
 
 void setup()
 {
-  tm1637.init();
-  tm1637.set(0);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
-  tm1637.point(POINT_OFF);
+  ledDisp_1.init();
+
+  // BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7; 
+  ledDisp_1.set(0);
+  ledDisp_1.point(POINT_OFF);
 
   pinMode(buttonPinCarOne, INPUT_PULLUP);
   attachInterrupt(buttonPinCarOne, press, FALLING);
@@ -74,27 +79,29 @@ void ledDisplayTimer(int laps) {
     int totalLength = total.length();
     if (totalLength == 1) {
       DisplayChar3 = DisplayChar0;
-      DisplayChar0 = 0;
-      DisplayChar1 = 0;
-      DisplayChar2 = 0;
-    }
-
-    if (totalLength == 2) {
+      // DisplayChar0 = 0;
+      // DisplayChar1 = 0;
+      // DisplayChar2 = 0;
+      ledDisp_1.display(3,DisplayChar3);
+    } else if (totalLength == 2) {
       DisplayChar3 = DisplayChar1;
       DisplayChar2 = DisplayChar0;
-      DisplayChar1 = 0;
-      DisplayChar0 = 0;
-    }
-
-    if (totalLength == 3) {
+      // DisplayChar1 = 0;
+      // DisplayChar0 = 0;
+      ledDisp_1.display(2,DisplayChar2);
+      ledDisp_1.display(3,DisplayChar3);
+    } else if (totalLength == 3) {
       DisplayChar3 = DisplayChar2;
       DisplayChar2 = DisplayChar1;
       DisplayChar1 = DisplayChar0;
-      DisplayChar0 = 0;
+      // DisplayChar0 = 0;
+      ledDisp_1.display(1,DisplayChar1);
+      ledDisp_1.display(2,DisplayChar2);
+      ledDisp_1.display(3,DisplayChar3);
+    } else {
+      ledDisp_1.display(0,DisplayChar0);
+      ledDisp_1.display(1,DisplayChar1);
+      ledDisp_1.display(2,DisplayChar2);
+      ledDisp_1.display(3,DisplayChar3);
     }
-
-    tm1637.display(0,DisplayChar0);
-    tm1637.display(1,DisplayChar1);
-    tm1637.display(2,DisplayChar2);
-    tm1637.display(3,DisplayChar3);
 }
