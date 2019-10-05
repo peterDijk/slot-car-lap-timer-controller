@@ -7,6 +7,7 @@
     "string": "cpp",
     "__tuple": "cpp",
     "array": "cpp"
-  }
+  },
+  "cortex-debug.openocdPath": "${command:particle.getDebuggerOpenocdPath}"
   
 }
