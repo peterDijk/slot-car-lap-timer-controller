@@ -61,7 +61,7 @@ void loop()
   ledDisplayTimer(lapsCarOne);
 }
 
-void millis_to_laptime(unsigned long millis, char* time_buffer) {
+void millis_to_laptime(unsigned long millis, char *time_buffer) {
   long in_seconds = millis / 1000;
   // int runHours = in_seconds / 3600;
   int secsRemaining = in_seconds % 3600;
@@ -74,41 +74,36 @@ void millis_to_laptime(unsigned long millis, char* time_buffer) {
 
 void trigger(int carId) {
   unsigned long current_time;
-  unsigned long last_lap_moment;
-  volatile bool triggered;
-  int lapscount; 
-  
+  unsigned long *last_lap_moment;
+  volatile bool *triggered;
+  int *lapscount;
+
   if (carId == 1) {
-    last_lap_moment = last_lap_moment_car_one; // with * it becomes a pointer to the memory position? 
-    lapscount = lapsCarOne;
-    triggered = carOneTriggered;
+    last_lap_moment = &last_lap_moment_car_one;
+    triggered = &carOneTriggered;
+    lapscount = &lapsCarOne; 
   }
   if (carId == 2) {
-    last_lap_moment = last_lap_moment_car_two;
-    lapscount = lapsCarTwo;
-    triggered = carTwoTriggered;
+    last_lap_moment = &last_lap_moment_car_two;
+    triggered = &carTwoTriggered;
+    lapscount = &lapsCarTwo; 
   }
+
   const int debounce = 300;
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
   if (interrupt_time - last_interrupt_time > debounce) {
     // LAP
     current_time = millis();
-    unsigned long lap_time = current_time - last_lap_moment;
+    unsigned long lap_time = current_time - *last_lap_moment;
     
-    if (carId == 1) { 
-      last_lap_moment_car_one = current_time;
-      carOneTriggered = true;
-    }
-    if (carId == 2) {
-      last_lap_moment_car_two = current_time;
-      carTwoTriggered = true;
-    }
+    *last_lap_moment = current_time;
+    *triggered = true;
 
     Serial.print("Car ");
     Serial.print(carId);
     Serial.print(" LAP # ");
-    Serial.print(lapscount);
+    Serial.print(*lapscount);
     Serial.print(" LAPTIME: ");
     char time_buffer[21];
     millis_to_laptime(lap_time, time_buffer);
