@@ -8,12 +8,16 @@
 
 #define CLK_1 D2
 #define DIO_1 D3
-#define buttonPinCarOne D6
+#define triggerPinCarOne D6
+#define triggerPinCarTwo D5
+
 
 // Car 1
 TM1637 ledDisp_1(CLK_1,DIO_1);
-volatile bool carOneIsPressed = false;
+volatile bool carOneTriggered = false;
 int lapsCarOne = 0;
+volatile bool carTwoTriggered = false;
+int lapsCarTwo = 0;
 
 
 /* 
@@ -28,22 +32,31 @@ void setup()
 
   // BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7; 
   ledDisp_1.set(0);
-  ledDisp_1.point(POINT_OFF);
+  ledDisp_1.point(POINT_ON);
 
-  pinMode(buttonPinCarOne, INPUT_PULLUP);
-  attachInterrupt(buttonPinCarOne, press, FALLING);
+  pinMode(triggerPinCarOne, INPUT); 
+  attachInterrupt(triggerPinCarOne, triggerCarOne, FALLING);
+
+  pinMode(triggerPinCarTwo, INPUT); 
+  attachInterrupt(triggerPinCarTwo, triggerCarTwo, FALLING);
 
   Serial.begin(9600);
   Serial.println("Serial ready...");
 }
 
-unsigned long last_lap_moment_car_one = millis(); // this has to move to moment the signals for go are done peep peep peeeeeeep go
+unsigned long last_lap_moment_car_one = 0;
+unsigned long last_lap_moment_car_two = 0;
+
 
 void loop()
 {
-    if (carOneIsPressed) {
+    if (carOneTriggered) {
       lapsCarOne++;
-      carOneIsPressed = false;
+      carOneTriggered = false;
+    }
+    if (carTwoTriggered) {
+      lapsCarTwo++;
+      carTwoTriggered = false;
     }
   ledDisplayTimer(lapsCarOne);
 }
@@ -59,23 +72,68 @@ void millis_to_laptime(unsigned long millis, char* time_buffer) {
   sprintf(time_buffer,"%02d:%02d:%02d", runMinutes, runSeconds, millisRemaining);
 }
 
-void press() { // make re-usable when using for car 2 as well
+void trigger(int carId) {
+  unsigned long current_time;
+  unsigned long last_lap_moment;
+  volatile bool triggered;
+  int lapscount; 
+  
+  if (carId == 1) {
+    last_lap_moment = last_lap_moment_car_one; // with * it becomes a pointer to the memory position? 
+    lapscount = lapsCarOne;
+    triggered = carOneTriggered;
+  }
+  if (carId == 2) {
+    last_lap_moment = last_lap_moment_car_two;
+    lapscount = lapsCarTwo;
+    triggered = carTwoTriggered;
+  }
   const int debounce = 300;
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
   if (interrupt_time - last_interrupt_time > debounce) {
     // LAP
-    unsigned long current_time_car_one = millis();
-    unsigned long lap_time_car_one = current_time_car_one - last_lap_moment_car_one;
-    last_lap_moment_car_one = current_time_car_one;
-    carOneIsPressed = true;
-    Serial.print("Car 1 LAP: ");
+    current_time = millis();
+    unsigned long lap_time = current_time - last_lap_moment;
+    
+    if (carId == 1) { 
+      last_lap_moment_car_one = current_time;
+      carOneTriggered = true;
+    }
+    if (carId == 2) {
+      last_lap_moment_car_two = current_time;
+      carTwoTriggered = true;
+    }
+
+    Serial.print("Car ");
+    Serial.print(carId);
+    Serial.print(" LAP # ");
+    Serial.print(lapscount);
+    Serial.print(" LAPTIME: ");
     char time_buffer[21];
-    millis_to_laptime(lap_time_car_one, time_buffer);
+    millis_to_laptime(lap_time, time_buffer);
     Serial.print(time_buffer);
     Serial.println(" ");
   }
   last_interrupt_time = interrupt_time;
+}
+
+void triggerCarOne() {
+  if (last_lap_moment_car_one == 0) {
+    last_lap_moment_car_one = millis();
+    Serial.println("Car 1 has started");
+  } else {
+    trigger(1);
+  }
+}
+
+void triggerCarTwo() {
+    if (last_lap_moment_car_two == 0) {
+    last_lap_moment_car_two = millis();
+    Serial.println("Car 2 has started");
+  } else {
+    trigger(2);
+  }
 }
 
 void ledDisplayTimer(int laps) {
