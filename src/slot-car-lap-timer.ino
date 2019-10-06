@@ -10,13 +10,10 @@
 #define DIO_1 D3
 #define triggerPinCarOne D6
 #define triggerPinCarTwo D5
+#define beeperPin A1
 
-
-// Car 1
 TM1637 ledDisp_1(CLK_1,DIO_1);
-volatile bool carOneTriggered = false;
 int lapsCarOne = 0;
-volatile bool carTwoTriggered = false;
 int lapsCarTwo = 0;
 
 
@@ -29,10 +26,11 @@ SYSTEM_MODE(MANUAL);
 void setup()
 {
   ledDisp_1.init();
-
   // BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7; 
   ledDisp_1.set(0);
   ledDisp_1.point(POINT_ON);
+
+  pinMode(beeperPin, OUTPUT);
 
   pinMode(triggerPinCarOne, INPUT); 
   attachInterrupt(triggerPinCarOne, triggerCarOne, FALLING);
@@ -50,42 +48,20 @@ unsigned long last_lap_moment_car_two = 0;
 
 void loop()
 {
-    if (carOneTriggered) {
-      lapsCarOne++;
-      carOneTriggered = false;
-    }
-    if (carTwoTriggered) {
-      lapsCarTwo++;
-      carTwoTriggered = false;
-    }
   ledDisplayTimer(lapsCarOne);
-}
-
-void millis_to_laptime(unsigned long millis, char *time_buffer) {
-  long in_seconds = millis / 1000;
-  // int runHours = in_seconds / 3600;
-  int secsRemaining = in_seconds % 3600;
-  int runMinutes = secsRemaining / 60;
-  int runSeconds = secsRemaining % 60;
-  int millisRemaining = millis % 1000;
-
-  sprintf(time_buffer,"%02d:%02d:%02d", runMinutes, runSeconds, millisRemaining);
 }
 
 void trigger(int carId) {
   unsigned long current_time;
   unsigned long *last_lap_moment;
-  volatile bool *triggered;
-  int *lapscount;
+  int *lapscount; // declare as pointer
 
   if (carId == 1) {
-    last_lap_moment = &last_lap_moment_car_one;
-    triggered = &carOneTriggered;
-    lapscount = &lapsCarOne; 
+    last_lap_moment = &last_lap_moment_car_one; // assign address to pointer
+    lapscount = &lapsCarOne;
   }
   if (carId == 2) {
     last_lap_moment = &last_lap_moment_car_two;
-    triggered = &carTwoTriggered;
     lapscount = &lapsCarTwo; 
   }
 
@@ -95,10 +71,11 @@ void trigger(int carId) {
   if (interrupt_time - last_interrupt_time > debounce) {
     // LAP
     current_time = millis();
-    unsigned long lap_time = current_time - *last_lap_moment;
+    unsigned long lap_time = current_time - *last_lap_moment;  
+    // *pointervar = value of address stored in pointervar
     
     *last_lap_moment = current_time;
-    *triggered = true;
+    *lapscount = *lapscount + 1;
 
     Serial.print("Car ");
     Serial.print(carId);
@@ -129,6 +106,17 @@ void triggerCarTwo() {
   } else {
     trigger(2);
   }
+}
+
+void millis_to_laptime(unsigned long millis, char *time_buffer) {
+  long in_seconds = millis / 1000;
+  // int runHours = in_seconds / 3600;
+  int secsRemaining = in_seconds % 3600;
+  int runMinutes = secsRemaining / 60;
+  int runSeconds = secsRemaining % 60;
+  int millisRemaining = millis % 1000;
+
+  sprintf(time_buffer,"%02d:%02d:%02d", runMinutes, runSeconds, millisRemaining);
 }
 
 void ledDisplayTimer(int laps) {
