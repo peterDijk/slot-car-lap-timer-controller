@@ -4,15 +4,16 @@
  * Author: Peter van Dijk
  * Date: 29 September 2019
  */
-#include "Grove_4Digit_Display.h"
+// #include "Grove_4Digit_Display.h"
+// #include "Adafruit_GFX.h"
+#include "Adafruit_SSD1306.h"
 
-#define CLK_1 D2
-#define DIO_1 D3
 #define triggerPinCarOne D6
 #define triggerPinCarTwo D5
 #define beeperPin A1
 
-TM1637 ledDisp_1(CLK_1,DIO_1);
+// TM1637 ledDisp_1(CLK_1,DIO_1);  
+Adafruit_SSD1306 display(-1);
 int lapsCarOne = 0;
 int lapsCarTwo = 0;
 
@@ -25,10 +26,16 @@ SYSTEM_MODE(MANUAL);
 
 void setup()
 {
-  ledDisp_1.init();
-  // BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7; 
-  ledDisp_1.set(0);
-  ledDisp_1.point(POINT_ON);
+  // ledDisp_1.init();
+  // // BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7; 
+  // ledDisp_1.set(0);
+  // ledDisp_1.point(POINT_ON);
+
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (found by scanner)
+  display.clearDisplay();
+  
+  // delay(2000);
+  // display.clearDisplay();
 
   pinMode(beeperPin, OUTPUT);
 
@@ -44,25 +51,51 @@ void setup()
 
 unsigned long last_lap_moment_car_one = 0;
 unsigned long last_lap_moment_car_two = 0;
+unsigned long latest_laptime_car_one;
+unsigned long latest_laptime_car_two;
 
 
 void loop()
 {
-  ledDisplayTimer(lapsCarOne);
+  // ledDisplayTimer(lapsCarOne);
+  setOledDisplay();
+}
+
+void setOledDisplay() {
+  char time_buffer_1[21];
+  char time_buffer_2[21];
+  millis_to_laptime(latest_laptime_car_one, time_buffer_1);
+  millis_to_laptime(latest_laptime_car_two, time_buffer_2);
+
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.print("#1 LAP:");
+  display.println(lapsCarOne);
+  display.println(time_buffer_1);
+  display.print("#2 LAP:");
+  display.println(lapsCarTwo);
+  display.println(time_buffer_2);
+
+  display.display();
 }
 
 void trigger(int carId) {
   unsigned long current_time;
   unsigned long *last_lap_moment;
   int *lapscount; // declare as pointer
+  unsigned long *laptime;
 
   if (carId == 1) {
     last_lap_moment = &last_lap_moment_car_one; // assign address to pointer
     lapscount = &lapsCarOne;
+    laptime = &latest_laptime_car_one;
   }
   if (carId == 2) {
     last_lap_moment = &last_lap_moment_car_two;
     lapscount = &lapsCarTwo; 
+    laptime = &latest_laptime_car_two;
   }
 
   const int debounce = 300;
@@ -71,19 +104,20 @@ void trigger(int carId) {
   if (interrupt_time - last_interrupt_time > debounce) {
     // LAP
     current_time = millis();
-    unsigned long lap_time = current_time - *last_lap_moment;  
+    unsigned long _lap_time = current_time - *last_lap_moment;  
     // *pointervar = value of address stored in pointervar
+    char time_buffer[21];
+    millis_to_laptime(_lap_time, time_buffer);
     
     *last_lap_moment = current_time;
     *lapscount = *lapscount + 1;
+    *laptime = _lap_time;
 
     Serial.print("Car ");
     Serial.print(carId);
     Serial.print(" LAP # ");
     Serial.print(*lapscount);
     Serial.print(" LAPTIME: ");
-    char time_buffer[21];
-    millis_to_laptime(lap_time, time_buffer);
     Serial.print(time_buffer);
     Serial.println(" ");
   }
@@ -119,48 +153,48 @@ void millis_to_laptime(unsigned long millis, char *time_buffer) {
   sprintf(time_buffer,"%02d:%02d:%02d", runMinutes, runSeconds, millisRemaining);
 }
 
-void ledDisplayTimer(int laps) {
-    if (laps == 9999) laps = 0;
+// void ledDisplayTimer(int laps) {
+//     if (laps == 9999) laps = 0;
 
-    String total = String(laps);
-    char CharStore[4];
-    total.toCharArray(CharStore, 4);
+//     String total = String(laps);
+//     char CharStore[4];
+//     total.toCharArray(CharStore, 4);
 
-    int DisplayChar0 = CharStore[0] - '0';
-    int DisplayChar1 = CharStore[1] - '0';
-    int DisplayChar2 = CharStore[2] - '0';
-    int DisplayChar3 = CharStore[3] - '0';
+//     int DisplayChar0 = CharStore[0] - '0';
+//     int DisplayChar1 = CharStore[1] - '0';
+//     int DisplayChar2 = CharStore[2] - '0';
+//     int DisplayChar3 = CharStore[3] - '0';
 
-    if (CharStore[0] == 0) DisplayChar0 = 0;
-    if (CharStore[1] == 0) DisplayChar1 = 0;
-    if (CharStore[2] == 0) DisplayChar2 = 0;
-    if (CharStore[3] == 0) DisplayChar3 = 0;
+//     if (CharStore[0] == 0) DisplayChar0 = 0;
+//     if (CharStore[1] == 0) DisplayChar1 = 0;
+//     if (CharStore[2] == 0) DisplayChar2 = 0;
+//     if (CharStore[3] == 0) DisplayChar3 = 0;
 
-    int totalLength = total.length();
-    if (totalLength == 1) {
-      DisplayChar3 = DisplayChar0;
+//     int totalLength = total.length();
+//     if (totalLength == 1) {
+//       DisplayChar3 = DisplayChar0;
 
-      ledDisp_1.display(3,DisplayChar3);
-    } else if (totalLength == 2) {
+//       ledDisp_1.display(3,DisplayChar3);
+//     } else if (totalLength == 2) {
 
-      DisplayChar3 = DisplayChar1;
-      DisplayChar2 = DisplayChar0;
+//       DisplayChar3 = DisplayChar1;
+//       DisplayChar2 = DisplayChar0;
 
-      ledDisp_1.display(2,DisplayChar2);
-      ledDisp_1.display(3,DisplayChar3);
+//       ledDisp_1.display(2,DisplayChar2);
+//       ledDisp_1.display(3,DisplayChar3);
 
-    } else if (totalLength == 3) {
-      DisplayChar3 = DisplayChar2;
-      DisplayChar2 = DisplayChar1;
-      DisplayChar1 = DisplayChar0;
+//     } else if (totalLength == 3) {
+//       DisplayChar3 = DisplayChar2;
+//       DisplayChar2 = DisplayChar1;
+//       DisplayChar1 = DisplayChar0;
 
-      ledDisp_1.display(1,DisplayChar1);
-      ledDisp_1.display(2,DisplayChar2);
-      ledDisp_1.display(3,DisplayChar3);
-    } else {
-      ledDisp_1.display(0,DisplayChar0);
-      ledDisp_1.display(1,DisplayChar1);
-      ledDisp_1.display(2,DisplayChar2);
-      ledDisp_1.display(3,DisplayChar3);
-    }
-}
+//       ledDisp_1.display(1,DisplayChar1);
+//       ledDisp_1.display(2,DisplayChar2);
+//       ledDisp_1.display(3,DisplayChar3);
+//     } else {
+//       ledDisp_1.display(0,DisplayChar0);
+//       ledDisp_1.display(1,DisplayChar1);
+//       ledDisp_1.display(2,DisplayChar2);
+//       ledDisp_1.display(3,DisplayChar3);
+//     }
+// }
