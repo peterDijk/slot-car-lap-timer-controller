@@ -57,7 +57,6 @@ unsigned long latest_laptime_car_two;
 
 void loop()
 {
-  // ledDisplayTimer(lapsCarOne);
   setOledDisplay();
 }
 
@@ -152,49 +151,3 @@ void millis_to_laptime(unsigned long millis, char *time_buffer) {
 
   sprintf(time_buffer,"%02d:%02d:%02d", runMinutes, runSeconds, millisRemaining);
 }
-
-// void ledDisplayTimer(int laps) {
-//     if (laps == 9999) laps = 0;
-
-//     String total = String(laps);
-//     char CharStore[4];
-//     total.toCharArray(CharStore, 4);
-
-//     int DisplayChar0 = CharStore[0] - '0';
-//     int DisplayChar1 = CharStore[1] - '0';
-//     int DisplayChar2 = CharStore[2] - '0';
-//     int DisplayChar3 = CharStore[3] - '0';
-
-//     if (CharStore[0] == 0) DisplayChar0 = 0;
-//     if (CharStore[1] == 0) DisplayChar1 = 0;
-//     if (CharStore[2] == 0) DisplayChar2 = 0;
-//     if (CharStore[3] == 0) DisplayChar3 = 0;
-
-//     int totalLength = total.length();
-//     if (totalLength == 1) {
-//       DisplayChar3 = DisplayChar0;
-
-//       ledDisp_1.display(3,DisplayChar3);
-//     } else if (totalLength == 2) {
-
-//       DisplayChar3 = DisplayChar1;
-//       DisplayChar2 = DisplayChar0;
-
-//       ledDisp_1.display(2,DisplayChar2);
-//       ledDisp_1.display(3,DisplayChar3);
-
-//     } else if (totalLength == 3) {
-//       DisplayChar3 = DisplayChar2;
-//       DisplayChar2 = DisplayChar1;
-//       DisplayChar1 = DisplayChar0;
-
-//       ledDisp_1.display(1,DisplayChar1);
-//       ledDisp_1.display(2,DisplayChar2);
-//       ledDisp_1.display(3,DisplayChar3);
-//     } else {
-//       ledDisp_1.display(0,DisplayChar0);
-//       ledDisp_1.display(1,DisplayChar1);
-//       ledDisp_1.display(2,DisplayChar2);
-//       ledDisp_1.display(3,DisplayChar3);
-//     }
-// }
